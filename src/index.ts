@@ -7,6 +7,7 @@
 
 interface Env {
   AI: Ai;
+  API_KEY: string;
 }
 
 export default {
@@ -19,6 +20,12 @@ export default {
     }
 
     try {
+      // Authenticate API endpoints via ?key= query param
+      if (url.pathname === "/api/willow" || url.pathname === "/api/tts") {
+        const authError = checkAuth(url, env);
+        if (authError) return authError;
+      }
+
       if (url.pathname === "/api/willow" && request.method === "POST") {
         return await handleASR(request, env);
       }
@@ -108,6 +115,22 @@ async function handleTTS(url: URL, env: Env): Promise<Response> {
       "Content-Type": "audio/wav",
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+
+function checkAuth(url: URL, env: Env): Response | null {
+  const key = url.searchParams.get("key");
+  if (!env.API_KEY) {
+    // No secret configured — allow all (dev/testing mode)
+    return null;
+  }
+  if (!key || key !== env.API_KEY) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
