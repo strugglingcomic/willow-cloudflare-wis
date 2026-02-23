@@ -6,7 +6,11 @@ Cloudflare Worker replacing dead Willow Inference Server (infer.tovera.io).
 
 - `POST /api/willow` — ASR via `@cf/openai/whisper-large-v3-turbo`
 - `GET /api/tts?text=...` — TTS via `@cf/deepgram/aura-2-en` (speaker: luna, WAV output)
-- Both require `?key=` query param (secret in `pass willow-wis/api-key` and Cloudflare Worker secret `API_KEY`)
+- `POST /api/echo` — Command endpoint; receives `{"text": "..."}`, returns plain text speech
+  - In `was_mode=false`: device POSTs directly here (not via WAS)
+  - JSON format from device: `{"text": "...", "language": "en"}`
+  - Response: plain text body displayed on screen and spoken via TTS
+- All require `?key=` query param (secret in `pass willow-wis/api-key` and Cloudflare Worker secret `API_KEY`)
 
 ## Deploy
 

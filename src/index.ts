@@ -21,7 +21,7 @@ export default {
 
     try {
       // Authenticate API endpoints via ?key= query param
-      if (url.pathname === "/api/willow" || url.pathname === "/api/tts") {
+      if (url.pathname === "/api/willow" || url.pathname === "/api/tts" || url.pathname === "/api/echo") {
         const authError = checkAuth(url, env);
         if (authError) return authError;
       }
@@ -32,6 +32,10 @@ export default {
 
       if (url.pathname === "/api/tts" && request.method === "GET") {
         return await handleTTS(url, env);
+      }
+
+      if (url.pathname === "/api/echo" && request.method === "POST") {
+        return await handleEcho(request);
       }
 
       // Health check
@@ -113,6 +117,24 @@ async function handleTTS(url: URL, env: Env): Promise<Response> {
     headers: {
       ...Object.fromEntries(corsHeaders().entries()),
       "Content-Type": "audio/wav",
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Echo: /api/echo — command endpoint for WAS REST; echoes transcription back
+// ---------------------------------------------------------------------------
+
+async function handleEcho(request: Request): Promise<Response> {
+  const body = await request.json<{ text?: string }>().catch(() => null);
+  const text = body?.text || "";
+  console.log("Echo request:", text);
+  const speech = text ? `You said: ${text}` : "I didn't catch that.";
+  return new Response(speech, {
+    status: 200,
+    headers: {
+      ...Object.fromEntries(corsHeaders().entries()),
+      "Content-Type": "text/plain",
     },
   });
 }
